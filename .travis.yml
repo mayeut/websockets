@@ -1,0 +1,25 @@
+env:
+  global:
+    - WEBSOCKETS_TESTS_TIMEOUT_FACTOR=5
+    - LDFLAGS="-coverage"
+
+matrix:
+  include:
+    - dist: trusty
+      language: python
+      python: "3.6"
+      env: CFLAGS="-O0 -coverage"
+    - dist: trusty
+      language: python
+      python: "3.6"
+      env: CFLAGS="-O0 -coverage -mno-sse2"
+
+install:
+  - pip install codecov coverage gcovr
+
+script:
+  - python setup.py build_ext -i -f &&
+    python -m coverage run -a --branch --source=websockets -m unittest &&
+    rm -f websockets/*.so &&
+    python -m coverage run -a --branch --source=websockets -m unittest &&
+    codecov
