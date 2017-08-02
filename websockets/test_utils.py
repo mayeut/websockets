@@ -1,3 +1,4 @@
+import os
 import unittest
 
 from .utils import apply_mask as py_apply_mask
@@ -48,3 +49,12 @@ else:
         @staticmethod
         def apply_mask(*args, **kwargs):
             return c_apply_mask(*args, **kwargs)
+
+        @unittest.skipIf(
+            '/bytesnullhook.so' not in os.getenv('LD_PRELOAD', ''),
+            'No NULL hook available')
+        def test_apply_mask_nomemory(self):                 # pragma: no cover
+            os.putenv('WEBSOCKETS_BYTES_NULL_HOOK', '1')
+            with self.assertRaises(MemoryError):
+                self.apply_mask(b'abcdefgh', b'1234')
+            os.unsetenv('WEBSOCKETS_BYTES_NULL_HOOK')

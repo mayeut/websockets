@@ -1,25 +1,27 @@
 env:
   global:
-    - WEBSOCKETS_TESTS_TIMEOUT_FACTOR=5
+    - WEBSOCKETS_TESTS_TIMEOUT_FACTOR=10
     - LDFLAGS="-coverage"
 
 matrix:
   include:
     - dist: trusty
       language: python
-      python: "3.6"
       env: CFLAGS="-O0 -coverage"
     - dist: trusty
       language: python
-      python: "3.6"
       env: CFLAGS="-O0 -coverage -mno-sse2"
 
 install:
-  - pip install codecov coverage gcovr
+  - pyenv install --list
+  - env PYTHON_CONFIGURE_OPTS="--enable-shared" pyenv install -f 3.5.2
+  - pyenv global 3.5.2
+  - pip3 install codecov coverage
+  - gcc -g -O1 -shared -I$(pyenv prefix)/include/python3.5m -fPIC -o bytesnullhook.so bytesnullhook.c
 
 script:
-  - python setup.py build_ext -i -f &&
-    python -m coverage run -a --branch --source=websockets -m unittest &&
+  - python3 setup.py build_ext -i -f &&
+    env LD_PRELOAD=$(pwd)/bytesnullhook.so python3 -m coverage run -a --branch --source=websockets -m unittest &&
     rm -f websockets/*.so &&
-    python -m coverage run -a --branch --source=websockets -m unittest &&
+    python3 -m coverage run -a --branch --source=websockets -m unittest &&
     codecov
